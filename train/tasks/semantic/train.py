@@ -13,14 +13,16 @@ from pip._vendor.distlib.compat import raw_input
 
 from tasks.semantic.modules.SalsaNextAdf import *
 from tasks.semantic.modules.SalsaNext import *
-#from tasks.semantic.modules.save_dataset_projected import *
+# from tasks.semantic.modules.save_dataset_projected import *
 import math
 from decimal import Decimal
+
 
 def remove_exponent(d):
     return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
 
-def millify(n, precision=0, drop_nulls=True, prefixes=[]):
+
+def millify(n, precision = 0, drop_nulls = True, prefixes = []):
     millnames = ['', 'k', 'M', 'B', 'T', 'P', 'E', 'Z', 'Y']
     if prefixes:
         millnames = ['']
@@ -28,15 +30,15 @@ def millify(n, precision=0, drop_nulls=True, prefixes=[]):
     n = float(n)
     millidx = max(0, min(len(millnames) - 1,
                          int(math.floor(0 if n == 0 else math.log10(abs(n)) / 3))))
-    result = '{:.{precision}f}'.format(n / 10**(3 * millidx), precision=precision)
+    result = '{:.{precision}f}'.format(n / 10 ** (3 * millidx), precision = precision)
     if drop_nulls:
         result = remove_exponent(Decimal(result))
-    return '{0}{dx}'.format(result, dx=millnames[millidx])
+    return '{0}{dx}'.format(result, dx = millnames[millidx])
 
 
 def str2bool(v):
     if isinstance(v, bool):
-       return v
+        return v
     if v.lower() in ('yes', 'true', 't', 'y'):
         return True
     elif v.lower() in ('no', 'false', 'f', 'n'):
@@ -44,51 +46,52 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean expected')
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("./train.py")
     parser.add_argument(
         '--dataset', '-d',
-        type=str,
-        required=True,
-        help='Dataset to train with. No Default',
+        type = str,
+        required = True,
+        help = 'Dataset to train with. No Default',
     )
     parser.add_argument(
         '--arch_cfg', '-ac',
-        type=str,
-        required=True,
-        help='Architecture yaml cfg file. See /config/arch for sample. No default!',
+        type = str,
+        required = True,
+        help = 'Architecture yaml cfg file. See /config/arch for sample. No default!',
     )
     parser.add_argument(
         '--data_cfg', '-dc',
-        type=str,
-        required=False,
-        default='config/labels/semantic-kitti.yaml',
-        help='Classification yaml cfg file. See /config/labels for sample. No default!',
+        type = str,
+        required = False,
+        default = 'config/labels/semantic-kitti.yaml',
+        help = 'Classification yaml cfg file. See /config/labels for sample. No default!',
     )
     parser.add_argument(
         '--log', '-l',
-        type=str,
-        default="~/output",
-        help='Directory to put the log data. Default: ~/logs/date+time'
+        type = str,
+        default = "~/output",
+        help = 'Directory to put the log data. Default: ~/logs/date+time'
     )
     parser.add_argument(
         '--name', '-n',
-        type=str,
-        default="",
-        help='If you want to give an aditional discriptive name'
+        type = str,
+        default = "",
+        help = 'If you want to give an aditional discriptive name'
     )
     parser.add_argument(
         '--pretrained', '-p',
-        type=str,
-        required=False,
-        default=None,
-        help='Directory to get the pretrained model. If not passed, do from scratch!'
+        type = str,
+        required = False,
+        default = None,
+        help = 'Directory to get the pretrained model. If not passed, do from scratch!'
     )
     parser.add_argument(
         '--uncertainty', '-u',
-        type=str2bool, nargs='?',
-        const=True, default=False,
-        help='Set this if you want to use the Uncertainty Version'
+        type = str2bool, nargs = '?',
+        const = True, default = False,
+        help = 'Set this if you want to use the Uncertainty Version'
     )
 
     FLAGS, unparsed = parser.parse_known_args()
@@ -106,7 +109,7 @@ if __name__ == '__main__':
     print("arch_cfg", FLAGS.arch_cfg)
     print("data_cfg", FLAGS.data_cfg)
     print("uncertainty", FLAGS.uncertainty)
-    print("Total of Trainable Parameters: {}".format(millify(pytorch_total_params,2)))
+    print("Total of Trainable Parameters: {}".format(millify(pytorch_total_params, 2)))
     print("log", FLAGS.log)
     print("pretrained", FLAGS.pretrained)
     print("----------\n")
@@ -173,5 +176,5 @@ if __name__ == '__main__':
         quit()
 
     # create trainer and start the training
-    trainer = Trainer(ARCH, DATA, FLAGS.dataset, FLAGS.log, FLAGS.pretrained,FLAGS.uncertainty)
+    trainer = Trainer(ARCH, DATA, FLAGS.dataset, FLAGS.log, FLAGS.pretrained, FLAGS.uncertainty)
     trainer.train()

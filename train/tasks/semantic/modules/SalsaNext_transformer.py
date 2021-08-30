@@ -174,13 +174,15 @@ class SalsaNext(nn.Module):
 
         self.downCntx = ResContextBlock(5, 32)
         self.downCntx2 = ResContextBlock(32, 32)
-        self.downCntx3 = ResContextBlock(32, 32)
+        self.downCntx3 = ResContextBlock(32, 32)  # 32 × 64 × 2048
 
-        self.resBlock1 = ResBlock(32, 2 * 32, 0.2, pooling = True, drop_out = False)
-        self.resBlock2 = ResBlock(2 * 32, 2 * 2 * 32, 0.2, pooling = True)
+        self.resBlock1 = ResBlock(32, 2 * 32, 0.2, pooling = True, drop_out = False)  # 64 × 32 × 1024
+        self.resBlock2 = ResBlock(2 * 32, 2 * 2 * 32, 0.2, pooling = True)  # 64 × 32 × 1024
         self.resBlock3 = ResBlock(2 * 2 * 32, 2 * 4 * 32, 0.2, pooling = True)
         self.resBlock4 = ResBlock(2 * 4 * 32, 2 * 4 * 32, 0.2, pooling = True)
         self.resBlock5 = ResBlock(2 * 4 * 32, 2 * 4 * 32, 0.2, pooling = False)
+
+        self.transformer_layer= nn.TransformerEncoderLayer(d_model=2 * 4 * 32, nhead=8)
 
         self.upBlock1 = UpBlock(2 * 4 * 32, 4 * 32, 0.2)
         self.upBlock2 = UpBlock(4 * 32, 4 * 32, 0.2)

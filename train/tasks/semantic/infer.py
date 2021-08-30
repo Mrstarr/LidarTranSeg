@@ -11,9 +11,11 @@ import shutil
 import __init__ as booger
 
 from tasks.semantic.modules.user import *
+
+
 def str2bool(v):
     if isinstance(v, bool):
-       return v
+        return v
     if v.lower() in ('yes', 'true', 't', 'y'):
         return True
     elif v.lower() in ('no', 'false', 'f', 'n'):
@@ -21,51 +23,51 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean expected')
 
+
 if __name__ == '__main__':
     splits = ["train", "valid", "test"]
     parser = argparse.ArgumentParser("./infer.py")
     parser.add_argument(
         '--dataset', '-d',
-        type=str,
-        required=True,
-        help='Dataset to train with. No Default',
+        type = str,
+        required = True,
+        help = 'Dataset to train with. No Default',
     )
     parser.add_argument(
         '--log', '-l',
-        type=str,
-        default=os.path.expanduser("~") + '/logs/' +
-                datetime.datetime.now().strftime("%Y-%-m-%d-%H:%M") + '/',
-        help='Directory to put the predictions. Default: ~/logs/date+time'
+        type = str,
+        default = os.path.expanduser("~") + '/logs/' +
+                  datetime.datetime.now().strftime("%Y-%-m-%d-%H:%M") + '/',
+        help = 'Directory to put the predictions. Default: ~/logs/date+time'
     )
     parser.add_argument(
         '--model', '-m',
-        type=str,
-        required=True,
-        default=None,
-        help='Directory to get the trained model.'
+        type = str,
+        required = True,
+        default = None,
+        help = 'Directory to get the trained model.'
     )
 
     parser.add_argument(
         '--uncertainty', '-u',
-        type=str2bool, nargs='?',
-        const=True, default=False,
-        help='Set this if you want to use the Uncertainty Version'
+        type = str2bool, nargs = '?',
+        const = True, default = False,
+        help = 'Set this if you want to use the Uncertainty Version'
     )
 
     parser.add_argument(
         '--monte-carlo', '-c',
-        type=int, default=30,
-        help='Number of samplings per scan'
+        type = int, default = 30,
+        help = 'Number of samplings per scan'
     )
-
 
     parser.add_argument(
         '--split', '-s',
-        type=str,
-        required=False,
-        default=None,
-        help='Split to evaluate on. One of ' +
-             str(splits) + '. Defaults to %(default)s',
+        type = str,
+        required = False,
+        default = None,
+        help = 'Split to evaluate on. One of ' +
+               str(splits) + '. Defaults to %(default)s',
     )
     FLAGS, unparsed = parser.parse_known_args()
 
@@ -79,7 +81,7 @@ if __name__ == '__main__':
     print("Monte Carlo Sampling", FLAGS.monte_carlo)
     print("infering", FLAGS.split)
     print("----------\n")
-    #print("Commit hash (training version): ", str(
+    # print("Commit hash (training version): ", str(
     #    subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()))
     print("----------\n")
 
@@ -140,5 +142,5 @@ if __name__ == '__main__':
         quit()
 
     # create user and infer dataset
-    user = User(ARCH, DATA, FLAGS.dataset, FLAGS.log, FLAGS.model,FLAGS.split,FLAGS.uncertainty,FLAGS.monte_carlo)
+    user = User(ARCH, DATA, FLAGS.dataset, FLAGS.log, FLAGS.model, FLAGS.split, FLAGS.uncertainty, FLAGS.monte_carlo)
     user.infer()

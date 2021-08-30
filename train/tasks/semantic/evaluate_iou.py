@@ -13,14 +13,17 @@ from tasks.semantic.modules.ioueval import iouEval
 from common.laserscan import SemLaserScan
 
 # possible splits
-splits = ['train','valid','test']
-def save_to_log(logdir,logfile,message):
-    f = open(logdir+'/'+logfile, "a")
-    f.write(message+'\n')
+splits = ['train', 'valid', 'test']
+
+
+def save_to_log(logdir, logfile, message):
+    f = open(logdir + '/' + logfile, "a")
+    f.write(message + '\n')
     f.close()
     return
 
-def eval(test_sequences,splits,pred):
+
+def eval(test_sequences, splits, pred):
     # get scan paths
     scan_names = []
     for sequence in test_sequences:
@@ -71,7 +74,7 @@ def eval(test_sequences,splits,pred):
     for scan_file, label_file, pred_file in zip(scan_names, label_names, pred_names):
         print("evaluating label ", label_file, "with", pred_file)
         # open label
-        label = SemLaserScan(project=False)
+        label = SemLaserScan(project = False)
         label.open_scan(scan_file)
         label.open_label(label_file)
         u_label_sem = remap_lut[label.sem_label]  # remap to xentropy format
@@ -79,7 +82,7 @@ def eval(test_sequences,splits,pred):
             u_label_sem = u_label_sem[:FLAGS.limit]
 
         # open prediction
-        pred = SemLaserScan(project=False)
+        pred = SemLaserScan(project = False)
         pred.open_scan(scan_file)
         pred.open_label(pred_file)
         u_pred_sem = remap_lut[pred.sem_label]  # remap to xentropy format
@@ -95,76 +98,77 @@ def eval(test_sequences,splits,pred):
 
     print('{split} set:\n'
           'Acc avg {m_accuracy:.3f}\n'
-          'IoU avg {m_jaccard:.3f}'.format(split=splits,
-                                           m_accuracy=m_accuracy,
-                                           m_jaccard=m_jaccard))
+          'IoU avg {m_jaccard:.3f}'.format(split = splits,
+                                           m_accuracy = m_accuracy,
+                                           m_jaccard = m_jaccard))
 
-    save_to_log(FLAGS.predictions,'pred.txt','{split} set:\n'
-          'Acc avg {m_accuracy:.3f}\n'
-          'IoU avg {m_jaccard:.3f}'.format(split=splits,
-                                           m_accuracy=m_accuracy,
-                                           m_jaccard=m_jaccard))
+    save_to_log(FLAGS.predictions, 'pred.txt', '{split} set:\n'
+                                               'Acc avg {m_accuracy:.3f}\n'
+                                               'IoU avg {m_jaccard:.3f}'.format(split = splits,
+                                                                                m_accuracy = m_accuracy,
+                                                                                m_jaccard = m_jaccard))
     # print also classwise
     for i, jacc in enumerate(class_jaccard):
         if i not in ignore:
             print('IoU class {i:} [{class_str:}] = {jacc:.3f}'.format(
-                i=i, class_str=class_strings[class_inv_remap[i]], jacc=jacc))
+                i = i, class_str = class_strings[class_inv_remap[i]], jacc = jacc))
             save_to_log(FLAGS.predictions, 'pred.txt', 'IoU class {i:} [{class_str:}] = {jacc:.3f}'.format(
-                i=i, class_str=class_strings[class_inv_remap[i]], jacc=jacc))
+                i = i, class_str = class_strings[class_inv_remap[i]], jacc = jacc))
 
     # print for spreadsheet
     print("*" * 80)
     print("below can be copied straight for paper table")
     for i, jacc in enumerate(class_jaccard):
         if i not in ignore:
-            sys.stdout.write('{jacc:.3f}'.format(jacc=jacc.item()))
+            sys.stdout.write('{jacc:.3f}'.format(jacc = jacc.item()))
             sys.stdout.write(",")
-    sys.stdout.write('{jacc:.3f}'.format(jacc=m_jaccard.item()))
+    sys.stdout.write('{jacc:.3f}'.format(jacc = m_jaccard.item()))
     sys.stdout.write(",")
-    sys.stdout.write('{acc:.3f}'.format(acc=m_accuracy.item()))
+    sys.stdout.write('{acc:.3f}'.format(acc = m_accuracy.item()))
     sys.stdout.write('\n')
     sys.stdout.flush()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("./evaluate_iou.py")
     parser.add_argument(
         '--dataset', '-d',
-        type=str,
-        required=True,
-        help='Dataset dir. No Default',
+        type = str,
+        required = True,
+        help = 'Dataset dir. No Default',
     )
     parser.add_argument(
         '--predictions', '-p',
-        type=str,
-        required=None,
-        help='Prediction dir. Same organization as dataset, but predictions in'
-             'each sequences "prediction" directory. No Default. If no option is set'
-             ' we look for the labels in the same directory as dataset'
+        type = str,
+        required = None,
+        help = 'Prediction dir. Same organization as dataset, but predictions in'
+               'each sequences "prediction" directory. No Default. If no option is set'
+               ' we look for the labels in the same directory as dataset'
     )
     parser.add_argument(
         '--split', '-s',
-        type=str,
-        required=False,
-        choices=["train", "valid", "test"],
-        default=None,
-        help='Split to evaluate on. One of ' +
-             str(splits) + '. Defaults to %(default)s',
+        type = str,
+        required = False,
+        choices = ["train", "valid", "test"],
+        default = None,
+        help = 'Split to evaluate on. One of ' +
+               str(splits) + '. Defaults to %(default)s',
     )
     parser.add_argument(
         '--data_cfg', '-dc',
-        type=str,
-        required=False,
-        default="config/labels/semantic-kitti.yaml",
-        help='Dataset config file. Defaults to %(default)s',
+        type = str,
+        required = False,
+        default = "config/labels/semantic-kitti.yaml",
+        help = 'Dataset config file. Defaults to %(default)s',
     )
     parser.add_argument(
         '--limit', '-l',
-        type=int,
-        required=False,
-        default=None,
-        help='Limit to the first "--limit" points of each scan. Useful for'
-             ' evaluating single scan from aggregated pointcloud.'
-             ' Defaults to %(default)s',
+        type = int,
+        required = False,
+        default = None,
+        help = 'Limit to the first "--limit" points of each scan. Useful for'
+               ' evaluating single scan from aggregated pointcloud.'
+               ' Defaults to %(default)s',
     )
 
     FLAGS, unparsed = parser.parse_known_args()
@@ -208,7 +212,7 @@ if __name__ == '__main__':
         if key > maxkey:
             maxkey = key
     # +100 hack making lut bigger just in case there are unknown labels
-    remap_lut = np.zeros((maxkey + 100), dtype=np.int32)
+    remap_lut = np.zeros((maxkey + 100), dtype = np.int32)
     for key, data in class_remap.items():
         try:
             remap_lut[key] = data
@@ -231,11 +235,7 @@ if __name__ == '__main__':
 
     # get test set
     if FLAGS.split is None:
-        for splits in ('train','valid'):
-            eval((DATA["split"][splits]),splits,FLAGS.predictions)
+        for splits in ('train', 'valid'):
+            eval((DATA["split"][splits]), splits, FLAGS.predictions)
     else:
-        eval(DATA["split"][FLAGS.split],splits,FLAGS.predictions)
-
-
-
-
+        eval(DATA["split"][FLAGS.split], splits, FLAGS.predictions)
