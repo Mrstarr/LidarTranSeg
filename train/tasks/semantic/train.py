@@ -11,9 +11,8 @@ import yaml
 from tasks.semantic.modules.trainer import *
 from pip._vendor.distlib.compat import raw_input
 
-from tasks.semantic.modules.SalsaNextAdf import *
-from tasks.semantic.modules.SalsaNext import *
-# from tasks.semantic.modules.save_dataset_projected import *
+from tasks.semantic.modules.Lidartranseg import LidarTranSeg
+
 import math
 from decimal import Decimal
 
@@ -88,20 +87,18 @@ if __name__ == '__main__':
         help = 'Directory to get the pretrained model. If not passed, do from scratch!'
     )
     parser.add_argument(
-        '--uncertainty', '-u',
-        type = str2bool, nargs = '?',
-        const = True, default = False,
-        help = 'Set this if you want to use the Uncertainty Version'
+        '--vit_pretrained', '-pv',
+        type = str, required = True,
+        default = None,
+        help = 'Directory to get the pretrained visual transformer model'
     )
 
     FLAGS, unparsed = parser.parse_known_args()
     FLAGS.log = FLAGS.log + '/logs/' + datetime.datetime.now().strftime("%Y-%-m-%d-%H:%M") + FLAGS.name
-    if FLAGS.uncertainty:
-        params = SalsaNextUncertainty(20)
-        pytorch_total_params = sum(p.numel() for p in params.parameters() if p.requires_grad)
-    else:
-        params = SalsaNext(20)
-        pytorch_total_params = sum(p.numel() for p in params.parameters() if p.requires_grad)
+
+    params = LidarTranSeg(num_of_classes = 20, in_channels = 5)
+    pytorch_total_params = sum(p.numel() for p in params.parameters() if p.requires_grad)
+
     # print summary of what we will do
     print("----------")
     print("INTERFACE:")
@@ -176,5 +173,5 @@ if __name__ == '__main__':
         quit()
 
     # create trainer and start the training
-    trainer = Trainer(ARCH, DATA, FLAGS.dataset, FLAGS.log, FLAGS.pretrained, FLAGS.uncertainty)
+    trainer = Trainer(ARCH, DATA, FLAGS.dataset, FLAGS.log,  FLAGS.vit, FLAGS.pretrained)
     trainer.train()
