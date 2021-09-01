@@ -222,8 +222,12 @@ class PatchEmbed(nn.Module):
         self.patch_size = patch_size
         self.num_patches = num_patches
 
-        self.proj = nn.Conv2d(in_chans, embed_dim,
-                              kernel_size=patch_size, stride=patch_size)
+        self.conv1 = nn.Conv2d(in_chans, 1, kernel_size=(1,1))
+        self.act1 = nn.LeakyReLU(inplace = True)
+        self.conv2 = nn.Conv2d(in_chans, in_chans, kernel_size = (3,3), padding = 1)
+        self.act2 = nn.LeakyReLU(inplace = True)
+        self.conv3 = nn.Conv2d(in_chans, 1, kernel_size = (3,3), padding = 1)
+        self.act3 = nn.LeakyReLU(inplace = True)
 
     def forward(self, x):
         B, C, H, W = x.shape
@@ -232,8 +236,19 @@ class PatchEmbed(nn.Module):
             f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
 
         # x = F.interpolate(x, size=2*x.shape[-1], mode='bilinear', align_corners=True)
-        x = self.proj(x).flatten(2).transpose(1, 2)
-        return x
+        shortcut = x.clone()
+        shortcut = self.conv1(shortcut)
+        shortcut = self.act1(shortcut)
+        out = self.conv2(x)
+        out = self.act2(out)
+        out = self.conv3(out)
+        out = self.act3(out)
+        out +=shortcut
+        out = out.unfold(2, self.patch_size, self.patch_size).unfold(3, self.patch_size, self.patch_size).contiguous()
+        out = out.view(B,1,-1,self.patch_size**2)
+        out = out.permute(0,2,3,1).contiguous()
+        out = out.view(B, -1, self.patch_size**2)
+        return out
 
 '''
 class HybridEmbed(nn.Module):
@@ -353,10 +368,10 @@ class VisionTransformer(nn.Module):
             self.default_cfg = default_cfgs[self.model_name]
 
             if self.model_name in ['vit_small_patch16_224', 'vit_base_patch16_224']:
-                load_pretrained(self, num_classes=self.num_classes, in_chans=self.in_chans, pos_embed_interp=self.pos_embed_interp,
+                load_pretrained(self, pretrained, self.default_cfg, num_classes=self.num_classes, in_chans=self.in_chans, pos_embed_interp=self.pos_embed_interp,
                                 num_patches=self.patch_embed.num_patches, align_corners=self.align_corners, filter_fn=self._conv_filter)
             else:
-                load_pretrained(self, num_classes=self.num_classes, in_chans=self.in_chans, pos_embed_interp=self.pos_embed_interp,
+                load_pretrained(self, pretrained, self.default_cfg, num_classes=self.num_classes, in_chans=self.in_chans, pos_embed_interp=self.pos_embed_interp,
                                 num_patches=self.patch_embed.num_patches, align_corners=self.align_corners)
         else:
             print('Initialize weight randomly')

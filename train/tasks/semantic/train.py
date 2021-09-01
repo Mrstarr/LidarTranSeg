@@ -11,7 +11,7 @@ import yaml
 from tasks.semantic.modules.trainer import *
 from pip._vendor.distlib.compat import raw_input
 
-from tasks.semantic.modules.Lidartranseg import LidarTranSeg
+#from tasks.semantic.modules.Lidartranseg import LidarTranSeg
 
 import math
 from decimal import Decimal
@@ -105,10 +105,10 @@ if __name__ == '__main__':
     print("dataset", FLAGS.dataset)
     print("arch_cfg", FLAGS.arch_cfg)
     print("data_cfg", FLAGS.data_cfg)
-    print("uncertainty", FLAGS.uncertainty)
     print("Total of Trainable Parameters: {}".format(millify(pytorch_total_params, 2)))
     print("log", FLAGS.log)
     print("pretrained", FLAGS.pretrained)
+    print("vit_pretrained", FLAGS.vit_pretrained)
     print("----------\n")
     # print("Commit hash (training version): ", str(
     #    subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()))
@@ -134,8 +134,7 @@ if __name__ == '__main__':
 
     # create log folder
     try:
-        if FLAGS.pretrained == "":
-            FLAGS.pretrained = None
+        if FLAGS.pretrained is None:
             if os.path.isdir(FLAGS.log):
                 if os.listdir(FLAGS.log):
                     answer = raw_input("Log Directory is not empty. Do you want to proceed? [y/n]  ")
@@ -173,5 +172,5 @@ if __name__ == '__main__':
         quit()
 
     # create trainer and start the training
-    trainer = Trainer(ARCH, DATA, FLAGS.dataset, FLAGS.log,  FLAGS.vit, FLAGS.pretrained)
+    trainer = Trainer(ARCH, DATA, FLAGS.dataset, FLAGS.log,  FLAGS.vit_pretained, FLAGS.pretrained)
     trainer.train()
