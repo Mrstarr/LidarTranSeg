@@ -20,6 +20,7 @@ from common.warmupLR import *
 from tasks.semantic.modules.ioueval import *
 from tasks.semantic.modules.Lidartranseg import *
 from tasks.semantic.modules.SalsaNext import *
+from tasks.semantic.modules.SalsaNext_transformer import *
 from tasks.semantic.modules.Lovasz_Softmax import Lovasz_softmax
 import tasks.semantic.modules.adf as adf
 
@@ -110,8 +111,8 @@ class Trainer():
         print("Loss weights from content: ", self.loss_w.data)
 
         with torch.no_grad():
-            self.model = LidarTranSeg(num_of_classes =self.parser.get_n_classes(), in_channels = 5, depth = 8, head = 8)
-            self.model.encoder.init_weights(vit_path)
+            self.model = SalsaNext_trans(num_of_classes =self.parser.get_n_classes())
+            #self.model.encoder.init_weights(vit_path)
             #self.model = SalsaNext(num_of_classes =self.parser.get_n_classes())
         self.tb_logger = Logger(self.log + "/tb")
 

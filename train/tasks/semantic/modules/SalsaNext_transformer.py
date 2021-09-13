@@ -6,6 +6,7 @@ import __init__ as booger
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from train.tasks.semantic.modules.encoder import PatchTrans
 
 
 class ResContextBlock(nn.Module):
@@ -40,12 +41,18 @@ class ResContextBlock(nn.Module):
 
 class ResBlock(nn.Module):
     def __init__(self, in_filters, out_filters, dropout_rate, kernel_size = (3, 3), stride = 1,
-                 pooling = True, drop_out = True):
+                 pooling = True, drop_out = True, trans_img= None):
         super(ResBlock, self).__init__()
         self.pooling = pooling
         self.drop_out = drop_out
-        self.conv1 = nn.Conv2d(in_filters, out_filters, kernel_size = (1, 1), stride = stride)
-        self.act1 = nn.LeakyReLU()
+        self.trans_img = trans_img
+        if self.trans_img is None:
+            self.respath = nn.Sequential(
+                                        nn.Conv2d(in_filters, out_filters, kernel_size = (1, 1), stride = stride),
+                                        nn.LeakyReLU())
+
+        else:
+            self.respath = PatchTrans(trans_img, in_filters, patch_size = trans_img[0])
 
         self.conv2 = nn.Conv2d(in_filters, out_filters, kernel_size = (3, 3), padding = 1)
         self.act2 = nn.LeakyReLU()
@@ -70,8 +77,11 @@ class ResBlock(nn.Module):
             self.dropout = nn.Dropout2d(p = dropout_rate)
 
     def forward(self, x):
-        shortcut = self.conv1(x)
-        shortcut = self.act1(shortcut)
+        if self.trans_img is None:
+            shortcut = self.conv1(x)
+            shortcut = self.act1(shortcut)
+        else:
+            shortcut = self.respath(x)
 
         resA = self.conv2(x)
         resA = self.act2(resA)
@@ -167,9 +177,9 @@ class UpBlock(nn.Module):
         return upE
 
 
-class SalsaNext(nn.Module):
+class SalsaNext_trans(nn.Module):
     def __init__(self, nclasses):
-        super(SalsaNext, self).__init__()
+        super(SalsaNext_trans, self).__init__()
         self.nclasses = nclasses
 
         self.downCntx = ResContextBlock(5, 32)
@@ -177,12 +187,10 @@ class SalsaNext(nn.Module):
         self.downCntx3 = ResContextBlock(32, 32)  # 32 × 64 × 2048
 
         self.resBlock1 = ResBlock(32, 2 * 32, 0.2, pooling = True, drop_out = False)  # 64 × 32 × 1024
-        self.resBlock2 = ResBlock(2 * 32, 2 * 2 * 32, 0.2, pooling = True)  # 64 × 32 × 1024
-        self.resBlock3 = ResBlock(2 * 2 * 32, 2 * 4 * 32, 0.2, pooling = True)
-        self.resBlock4 = ResBlock(2 * 4 * 32, 2 * 4 * 32, 0.2, pooling = True)
+        self.resBlock2 = ResBlock(2 * 32, 2 * 2 * 32, 0.2, pooling = True, trans_img = (32, 1024))  # 64 × 32 × 1024
+        self.resBlock3 = ResBlock(2 * 2 * 32, 2 * 4 * 32, 0.2, pooling = True, trans_img = (16, 512))
+        self.resBlock4 = ResBlock(2 * 4 * 32, 2 * 4 * 32, 0.2, pooling = True, trans_img = (8, 256))
         self.resBlock5 = ResBlock(2 * 4 * 32, 2 * 4 * 32, 0.2, pooling = False)
-
-        self.transformer_layer= nn.TransformerEncoderLayer(d_model=2 * 4 * 32, nhead=8)
 
         self.upBlock1 = UpBlock(2 * 4 * 32, 4 * 32, 0.2)
         self.upBlock2 = UpBlock(4 * 32, 4 * 32, 0.2)

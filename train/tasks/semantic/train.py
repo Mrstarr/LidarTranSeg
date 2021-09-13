@@ -172,5 +172,5 @@ if __name__ == '__main__':
         quit()
 
     # create trainer and start the training
-    trainer = Trainer(ARCH, DATA, FLAGS.dataset, FLAGS.log,  FLAGS.vit_pretained, FLAGS.pretrained)
+    trainer = Trainer(ARCH, DATA, FLAGS.dataset, FLAGS.log,  FLAGS.vit_pretrained, FLAGS.pretrained)
     trainer.train()
