@@ -86,12 +86,6 @@ if __name__ == '__main__':
         default = None,
         help = 'Directory to get the pretrained model. If not passed, do from scratch!'
     )
-    parser.add_argument(
-        '--vit_pretrained', '-pv',
-        type = str, required = True,
-        default = None,
-        help = 'Directory to get the pretrained visual transformer model'
-    )
 
     FLAGS, unparsed = parser.parse_known_args()
     FLAGS.log = FLAGS.log + '/logs/' + datetime.datetime.now().strftime("%Y-%-m-%d-%H:%M") + FLAGS.name
@@ -172,5 +166,5 @@ if __name__ == '__main__':
         quit()
 
     # create trainer and start the training
-    trainer = Trainer(ARCH, DATA, FLAGS.dataset, FLAGS.log,  FLAGS.vit_pretrained, FLAGS.pretrained)
+    trainer = Trainer(ARCH, DATA, FLAGS.dataset, FLAGS.log, FLAGS.pretrained)
     trainer.train()

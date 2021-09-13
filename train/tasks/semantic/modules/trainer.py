@@ -50,15 +50,13 @@ def save_checkpoint(to_save, logdir, suffix=""):
 
 
 class Trainer():
-    def __init__(self, ARCH, DATA, datadir, logdir, vit_path, path=None):
+    def __init__(self, ARCH, DATA, datadir, logdir, path=None):
         # parameters
         self.ARCH = ARCH
         self.DATA = DATA
         self.datadir = datadir
         self.log = logdir
         self.path = path
-        self.vit_path =vit_path
-
 
         self.batch_time_t = AverageMeter()
         self.data_time_t = AverageMeter()
@@ -112,7 +110,6 @@ class Trainer():
 
         with torch.no_grad():
             self.model = SalsaNext_trans(num_of_classes =self.parser.get_n_classes())
-            #self.model.encoder.init_weights(vit_path)
             #self.model = SalsaNext(num_of_classes =self.parser.get_n_classes())
         self.tb_logger = Logger(self.log + "/tb")
 
