@@ -81,3 +81,6 @@ class iouEval:
         total = tp[self.include].sum() + fp[self.include].sum() + 1e-15
         acc_mean = total_tp / total
         return acc_mean  # returns "acc mean"
+
+    def getconf(self):
+        return self.conf_matrix

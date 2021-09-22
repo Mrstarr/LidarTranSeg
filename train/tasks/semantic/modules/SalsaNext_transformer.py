@@ -6,7 +6,8 @@ import __init__ as booger
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from train.tasks.semantic.modules.encoder import PatchTrans
+from tasks.semantic.modules.encoder import PatchTrans
+from tasks.semantic.modules.SalsaNextAdf import *
 
 
 class ResContextBlock(nn.Module):
@@ -46,13 +47,13 @@ class ResBlock(nn.Module):
         self.pooling = pooling
         self.drop_out = drop_out
         self.trans_img = trans_img
-        if self.trans_img is None:
-            self.respath = nn.Sequential(
-                                        nn.Conv2d(in_filters, out_filters, kernel_size = (1, 1), stride = stride),
-                                        nn.LeakyReLU())
-
+        self.conv1 = nn.Conv2d(in_filters, out_filters, kernel_size = (1, 1), stride = stride)
+        if self.trans_img is not None:
+            self.local_trans = PatchTrans(trans_img, out_filters, multi_head = 4, use_mlp = False, attn_drop = 0.1,
+                                          patch_size = trans_img[0])
+            self.respath = nn.Sequential(self.conv1, self.local_trans)
         else:
-            self.respath = PatchTrans(trans_img, in_filters, patch_size = trans_img[0])
+            self.respath = nn.Sequential(self.conv1, nn.LeakyReLU())
 
         self.conv2 = nn.Conv2d(in_filters, out_filters, kernel_size = (3, 3), padding = 1)
         self.act2 = nn.LeakyReLU()
@@ -77,11 +78,7 @@ class ResBlock(nn.Module):
             self.dropout = nn.Dropout2d(p = dropout_rate)
 
     def forward(self, x):
-        if self.trans_img is None:
-            shortcut = self.conv1(x)
-            shortcut = self.act1(shortcut)
-        else:
-            shortcut = self.respath(x)
+        shortcut = self.respath(x)
 
         resA = self.conv2(x)
         resA = self.act2(resA)
@@ -178,9 +175,9 @@ class UpBlock(nn.Module):
 
 
 class SalsaNext_trans(nn.Module):
-    def __init__(self, nclasses):
+    def __init__(self, num_of_classes):
         super(SalsaNext_trans, self).__init__()
-        self.nclasses = nclasses
+        self.num_of_classes = num_of_classes
 
         self.downCntx = ResContextBlock(5, 32)
         self.downCntx2 = ResContextBlock(32, 32)
@@ -190,14 +187,14 @@ class SalsaNext_trans(nn.Module):
         self.resBlock2 = ResBlock(2 * 32, 2 * 2 * 32, 0.2, pooling = True, trans_img = (32, 1024))  # 64 × 32 × 1024
         self.resBlock3 = ResBlock(2 * 2 * 32, 2 * 4 * 32, 0.2, pooling = True, trans_img = (16, 512))
         self.resBlock4 = ResBlock(2 * 4 * 32, 2 * 4 * 32, 0.2, pooling = True, trans_img = (8, 256))
-        self.resBlock5 = ResBlock(2 * 4 * 32, 2 * 4 * 32, 0.2, pooling = False)
+        self.resBlock5 = ResBlock(2 * 4 * 32, 2 * 4 * 32, 0.2, pooling = False, trans_img=(4, 128))
 
         self.upBlock1 = UpBlock(2 * 4 * 32, 4 * 32, 0.2)
         self.upBlock2 = UpBlock(4 * 32, 4 * 32, 0.2)
         self.upBlock3 = UpBlock(4 * 32, 2 * 32, 0.2)
         self.upBlock4 = UpBlock(2 * 32, 32, 0.2, drop_out = False)
 
-        self.logits = nn.Conv2d(32, nclasses, kernel_size = (1, 1))
+        self.logits = nn.Conv2d(32, num_of_classes, kernel_size = (1, 1))
 
     def forward(self, x):
         downCntx = self.downCntx(x)

@@ -7,6 +7,9 @@ import yaml
 import sys
 import numpy as np
 import torch
+import seaborn as sn
+import pandas as pd
+import matplotlib.pyplot as plt
 import __init__ as booger
 
 from tasks.semantic.modules.ioueval import iouEval
@@ -115,8 +118,25 @@ def eval(test_sequences, splits, pred):
             save_to_log(FLAGS.predictions, 'pred.txt', 'IoU class {i:} [{class_str:}] = {jacc:.3f}'.format(
                 i = i, class_str = class_strings[class_inv_remap[i]], jacc = jacc))
 
-    # print for spreadsheet
+    # Optional : OUTPUT CONFUSION MATRIX !
     print("*" * 80)
+    conf = evaluator.getconf()
+    conf = conf.numpy()
+    conf = conf / conf.astype(np.float).sum(axis=0)
+    # to add ....
+    df_cm = pd.DataFrame(conf, ["outline","car","bicycle","motorcycle","truck","other-vehicle","person","bicyclist","motorcyclist"
+                                ,"road","parking","sidewalk","otherground","building","fence","vegetation","trunk","terrain",
+                                "pole","traffic sign"],
+                         ["outline", "car", "bicycle", "motorcycle", "truck", "other-vehicle", "person", "bicyclist",
+                          "motorcyclist", "road", "parking", "sidewalk", "otherground", "building", "fence", "vegetation", "trunk",
+                          "terrain", "pole", "traffic sign"]
+                         )
+    plt.figure(figsize = (10, 7))
+    sn.set(font_scale = 0.8)
+    sn.heatmap(df_cm, annot = True, annot_kws = {"size":8})
+    plt.show()
+    print("*" * 80)
+
     print("below can be copied straight for paper table")
     for i, jacc in enumerate(class_jaccard):
         if i not in ignore:

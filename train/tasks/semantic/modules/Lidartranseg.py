@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-#from .encoder import trunc_normal_, DropPath, Mlp, Attention
-#from .decoder import Salsadecoder, LidarDecoder
+from .encoder import trunc_normal_, DropPath, Mlp, Attention
+from .decoder import Salsadecoder, LidarDecoder
 
 class Block(nn.Module):
 

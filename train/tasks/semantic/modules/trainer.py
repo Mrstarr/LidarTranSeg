@@ -18,11 +18,9 @@ from common.logger import Logger
 from common.sync_batchnorm.batchnorm import convert_model
 from common.warmupLR import *
 from tasks.semantic.modules.ioueval import *
-from tasks.semantic.modules.Lidartranseg import *
-from tasks.semantic.modules.SalsaNext import *
 from tasks.semantic.modules.SalsaNext_transformer import *
 from tasks.semantic.modules.Lovasz_Softmax import Lovasz_softmax
-import tasks.semantic.modules.adf as adf
+
 
 def keep_variance_fn(x):
     return x + 1e-3
@@ -264,7 +262,7 @@ class Trainer():
                      'info': self.info,
                      'scheduler': self.scheduler.state_dict()
                      }
-            save_checkpoint(state, self.log, suffix="")
+            # save_checkpoint(state, self.log, suffix="")
 
             if self.info['train_iou'] > self.info['best_train_iou']:
                 print("Best mean iou in training set so far, save model!")

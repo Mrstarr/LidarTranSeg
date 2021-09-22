@@ -18,6 +18,7 @@ import numpy as np
 
 from tasks.semantic.modules.SalsaNext import *
 from tasks.semantic.modules.SalsaNextAdf import *
+from tasks.semantic.modules.SalsaNext_transformer import *
 from tasks.semantic.postproc.KNN import KNN
 
 
@@ -62,9 +63,9 @@ class User():
                                 map_location=lambda storage, loc: storage)
             self.model.load_state_dict(w_dict['state_dict'], strict=True)
         else:
-            self.model = SalsaNext(self.parser.get_n_classes())
+            self.model = SalsaNext_trans(self.parser.get_n_classes())
             self.model = nn.DataParallel(self.model)
-            w_dict = torch.load(modeldir + "/SalsaNext",
+            w_dict = torch.load(modeldir + "/SalsaNext_valid_best",
                                 map_location=lambda storage, loc: storage)
             self.model.load_state_dict(w_dict['state_dict'], strict=True)
 
