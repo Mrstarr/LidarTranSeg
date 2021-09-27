@@ -47,29 +47,28 @@ class ResBlock(nn.Module):
         self.pooling = pooling
         self.drop_out = drop_out
         self.trans_img = trans_img
-        self.conv1 = nn.Conv2d(in_filters, out_filters, kernel_size = (1, 1), stride = stride)
+
+        self.conv1 = nn.Conv2d(in_filters, out_filters//2, kernel_size = (1, 1), stride = stride)
+        self.act1 = nn.LeakyReLU()
         if self.trans_img is not None:
-            self.local_trans = PatchTrans(trans_img, out_filters, multi_head = 4, use_mlp = False, attn_drop = 0.1,
+            self.local_trans = PatchTrans(trans_img, out_filters, multi_head = 4, drop = 0.2,
                                           patch_size = trans_img[0])
-            self.respath = nn.Sequential(self.conv1, self.local_trans)
-        else:
-            self.respath = nn.Sequential(self.conv1, nn.LeakyReLU())
 
-        self.conv2 = nn.Conv2d(in_filters, out_filters, kernel_size = (3, 3), padding = 1)
+        self.conv2 = nn.Conv2d(in_filters, out_filters//2, kernel_size = (3, 3), padding = 1)
         self.act2 = nn.LeakyReLU()
-        self.bn1 = nn.BatchNorm2d(out_filters)
+        self.bn1 = nn.BatchNorm2d(out_filters//2)
 
-        self.conv3 = nn.Conv2d(out_filters, out_filters, kernel_size = (3, 3), dilation = 2, padding = 2)
+        self.conv3 = nn.Conv2d(out_filters//2, out_filters//2, kernel_size = (3, 3), dilation = 2, padding = 2)
         self.act3 = nn.LeakyReLU()
-        self.bn2 = nn.BatchNorm2d(out_filters)
+        self.bn2 = nn.BatchNorm2d(out_filters//2)
 
-        self.conv4 = nn.Conv2d(out_filters, out_filters, kernel_size = (2, 2), dilation = 2, padding = 1)
+        self.conv4 = nn.Conv2d(out_filters//2, out_filters//2, kernel_size = (3, 3), dilation = 2, padding = 2)
         self.act4 = nn.LeakyReLU()
-        self.bn3 = nn.BatchNorm2d(out_filters)
+        self.bn3 = nn.BatchNorm2d(out_filters//2)
 
-        self.conv5 = nn.Conv2d(out_filters * 3, out_filters, kernel_size = (1, 1))
-        self.act5 = nn.LeakyReLU()
-        self.bn4 = nn.BatchNorm2d(out_filters)
+        # self.conv5 = nn.Conv2d((out_filters//2) * 3, out_filters//2, kernel_size = (1, 1))
+        # self.act5 = nn.LeakyReLU()
+        # self.bn4 = nn.BatchNorm2d(out_filters//2)
 
         if pooling:
             self.dropout = nn.Dropout2d(p = dropout_rate)
@@ -78,25 +77,16 @@ class ResBlock(nn.Module):
             self.dropout = nn.Dropout2d(p = dropout_rate)
 
     def forward(self, x):
-        shortcut = self.respath(x)
+        F1 = self.act1(self.conv1(x))
+        if self.trans_img is not None:
+            F1 = self.local_trans(F1)
 
-        resA = self.conv2(x)
-        resA = self.act2(resA)
-        resA1 = self.bn1(resA)
+        F2 = self.bn1(self.act2(self.conv2(x)))
 
-        resA = self.conv3(resA1)
-        resA = self.act3(resA)
-        resA2 = self.bn2(resA)
+        F2 = self.bn2(self.act3(self.conv3(F2)))
+        F2 = self.bn3(self.act4(self.conv4(F2)))
 
-        resA = self.conv4(resA2)
-        resA = self.act4(resA)
-        resA3 = self.bn3(resA)
-
-        concat = torch.cat((resA1, resA2, resA3), dim = 1)
-        resA = self.conv5(concat)
-        resA = self.act5(resA)
-        resA = self.bn4(resA)
-        resA = shortcut + resA
+        resA = torch.cat((F1, F2), dim = 1)
 
         if self.pooling:
             if self.drop_out:
@@ -186,8 +176,8 @@ class SalsaNext_trans(nn.Module):
         self.resBlock1 = ResBlock(32, 2 * 32, 0.2, pooling = True, drop_out = False)  # 64 × 32 × 1024
         self.resBlock2 = ResBlock(2 * 32, 2 * 2 * 32, 0.2, pooling = True, trans_img = (32, 1024))  # 64 × 32 × 1024
         self.resBlock3 = ResBlock(2 * 2 * 32, 2 * 4 * 32, 0.2, pooling = True, trans_img = (16, 512))
-        self.resBlock4 = ResBlock(2 * 4 * 32, 2 * 4 * 32, 0.2, pooling = True, trans_img = (8, 256))
-        self.resBlock5 = ResBlock(2 * 4 * 32, 2 * 4 * 32, 0.2, pooling = False, trans_img=(4, 128))
+        self.resBlock4 = ResBlock(2 * 4 * 32, 4 * 4 * 32, 0.2, pooling = True, trans_img = (8, 256))
+        self.resBlock5 = ResBlock(4 * 4 * 32, 2 * 4 * 32, 0.2, pooling = False)
 
         self.upBlock1 = UpBlock(2 * 4 * 32, 4 * 32, 0.2)
         self.upBlock2 = UpBlock(4 * 32, 4 * 32, 0.2)
